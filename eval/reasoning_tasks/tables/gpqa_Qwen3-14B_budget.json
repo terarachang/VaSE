@@ -1,0 +1,47 @@
+{
+  "2048": [
+    {
+      "Method": "RKV",
+      "Acc": 59.09
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 48.48
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 56.76
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 57.39
+    },
+    {
+      "Method": "Full",
+      "Acc": 65.25
+    }
+  ],
+
+  "4096": [
+    {
+      "Method": "RKV",
+      "Acc": 63.32
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 60.54
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 63.38
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 63.07
+    },
+    {
+      "Method": "Full",
+      "Acc": 65.25
+    }
+  ]
+}

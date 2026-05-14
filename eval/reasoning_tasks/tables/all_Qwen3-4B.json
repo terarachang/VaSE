@@ -1,0 +1,183 @@
+{
+  "AIME25": [
+    {
+      "Method": "Attn",
+      "Acc": 45.80
+    },
+    {
+      "Method": "RKV",
+      "Acc": 49.58
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 48.75
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 57.29
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 59.17
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 58.59
+    },
+    {
+      "Method": "Full",
+      "Acc": 66.41
+    }
+  ],
+
+  "GPQA-Diamond": [
+    {
+      "Method": "Attn",
+      "Acc": 36.87
+    },
+    {
+      "Method": "RKV",
+      "Acc": 49.05
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 37.94
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 43.94
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 47.98
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 49.94
+    },
+    {
+      "Method": "Full",
+      "Acc": 56.19
+    }
+  ],
+
+  "MATH": [
+    {
+      "Method": "Attn",
+      "Acc": 72.30
+    },
+    {
+      "Method": "RKV",
+      "Acc": 83.28
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 74.42
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 84.72
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 81.82
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 84.67
+    },
+    {
+      "Method": "Full",
+      "Acc": 93.93
+    }
+  ],
+
+  "AIME26": [
+    {
+      "Method": "Attn",
+      "Acc": 48.54
+    },
+    {
+      "Method": "RKV",
+      "Acc": 52.92
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 54.58
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 61.88
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 59.38
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 60.42
+    },
+    {
+      "Method": "Full",
+      "Acc": 62.71
+    }
+  ],
+
+  "HMMT25": [
+    {
+      "Method": "Attn",
+      "Acc": 35.31
+    },
+    {
+      "Method": "RKV",
+      "Acc": 36.98
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 33.23
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 39.58
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 44.38
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 40.42
+    },
+    {
+      "Method": "Full",
+      "Acc": 45.94
+    }
+  ],
+
+  "LiveCodeBench": [
+    {
+      "Method": "CUR Fixed",
+      "Acc": 33.98
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 60.74
+    },
+    {
+      "Method": "RKV",
+      "Acc": 61.68
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 61.81
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 44.16
+    },
+    {
+      "Method": "Full",
+      "Acc": 78.79
+    }
+  ]
+}

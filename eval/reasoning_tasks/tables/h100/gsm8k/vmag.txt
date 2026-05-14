@@ -1,0 +1,6 @@
+Directory                     Config       Avg Acc   Avg Len  No Ans     #  Runs
+----------------------------  ----------  --------  --------  ------  ----  ----
+absmax_sink_sample_attn       512_smooth    84.65%      2126      69   500     4
+l2_sink_sample_attn           512_smooth    84.55%      2173      70   500     4
+small_range_sink_sample_attn  512_smooth    84.45%      2140      72   500     4
+var_sink_sample_attn          512_smooth    84.00%      2186      74   500     4

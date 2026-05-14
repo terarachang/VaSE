@@ -1,0 +1,7 @@
+Directory  Config                                                   # Examples   Avg Acc     
+---------  -------------------------------------------------------  ----------  --------  ---
+Qwen3-4B   Evict/evict_cur/512_per_head                                    500    82.85%     
+Qwen3-4B   Evict/evict_random_middle/512_per_head                          500    85.70%     
+Qwen3-4B   Evict/evict_small_range_attn/512_per_head_smooth                500    80.45%     
+Qwen3-4B   Evict/evict_small_range_sample_attn/512_per_head_smooth         500    85.15%     
+Qwen3-4B   Evict/evict_small_sink/512_per_head                             500    81.55%     

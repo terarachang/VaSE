@@ -1,0 +1,4 @@
+eval/reasoning_tasks/gsm8k
+eval/reasoning_tasks/CLAUDE.md
+__pycache__/
+*.pyc

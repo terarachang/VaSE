@@ -1,0 +1,70 @@
+{
+  "2048": [
+    {
+      "Method": "RKV",
+      "Acc": 25.62
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 24.58
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 35.00
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 32.08
+    },
+    {
+      "Method": "Full",
+      "Acc": 54.79
+    }
+  ],
+
+  "4096": [
+    {
+      "Method": "RKV",
+      "Acc": 44.58
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 39.58
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 49.38
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 50.00
+    },
+    {
+      "Method": "Full",
+      "Acc": 54.79
+    }
+  ],
+
+  "6144": [
+    {
+      "Method": "RKV",
+      "Acc": 50.00
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 47.71
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 51.04
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 53.54
+    },
+    {
+      "Method": "Full",
+      "Acc": 54.79
+    }
+  ]
+}

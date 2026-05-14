@@ -1,0 +1,136 @@
+{
+  "AIME25": [
+    {
+      "Method": "RKV",
+      "Acc": 53.75
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 53.75
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 63.33
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 63.58
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 64.79
+    },
+    {
+      "Method": "Full",
+      "Acc": 70.21
+    }
+  ],
+
+  "GPQA-Diamond": [
+    {
+      "Method": "RKV",
+      "Acc": 59.09
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 48.48
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 56.76
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 57.39
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 61.68
+    },
+    {
+      "Method": "Full",
+      "Acc": 65.25
+    }
+  ],
+
+  "MATH": [
+    {
+      "Method": "RKV",
+      "Acc": 86.05
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 75.42
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 86.47
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 85.42
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 86.12
+    },
+    {
+      "Method": "Full",
+      "Acc": 95.22
+    }
+  ],
+
+  "AIME26": [
+    {
+      "Method": "RKV",
+      "Acc": 60.21
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 61.25
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 68.75
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 72.29
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 65.62
+    },
+    {
+      "Method": "Full",
+      "Acc": 76.04
+    }
+  ],
+
+  "HMMT25": [
+    {
+      "Method": "RKV",
+      "Acc": 44.58
+    },
+    {
+      "Method": "CUR Fixed",
+      "Acc": 39.58
+    },
+    {
+      "Method": "CUR Resample",
+      "Acc": 49.38
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Acc": 50.00
+    },
+    {
+      "Method": "SeerR",
+      "Acc": 48.65
+    },
+    {
+      "Method": "Full",
+      "Acc": 54.79
+    }
+  ]
+}
