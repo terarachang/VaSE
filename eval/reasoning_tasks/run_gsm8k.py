@@ -188,7 +188,7 @@ if __name__ == "__main__":
     parser.add_argument('--max_tokens', type=int, default=4096)
     parser.add_argument("--t_b", dest="token_budget", type=int, help="only used in sparsity_method = eviction")
     parser.add_argument('--model_name', type=str, default='Qwen/Qwen3-4B')
-    parser.add_argument('--attention_implementation', type=str, default="eager")
+    parser.add_argument('--attention_implementation', type=str, default="flash_attention_2")
     parser.add_argument('--split', type=str, default='test')
     parser.add_argument('--limit', type=int, default=500)
     parser.add_argument('--n_offset', type=int, default=0)

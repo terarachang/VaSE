@@ -403,6 +403,8 @@ class EvictLayer(DynamicLayer):
 
         if self.MODE == 'cur_fixed_gauss' and not hasattr(self, 'G'):
             r = 20
+            # batch_size dim to ensure that different samples use a different G to avoid biased sampling
+            # empirically, this yields ~2% improvements in acc
             G = torch.randn(batch_size, 1, head_dim, r, device=self.device) / math.sqrt(r)
             self.G = G.to(self.dtype)
             
@@ -470,11 +472,6 @@ class EvictLayer(DynamicLayer):
                 else:
                     ids_to_keep = select_remaining_based_on_scores(ids_large, random_scores, K-self.n_large)
 
-            elif self.MODE == 'key_norm':
-                # a low L2 norm of a key embedding usually leads to a high attention score during decoding
-                norms = -(k_candidates.norm(dim=-1))
-                ids_to_keep = norms.topk(K, dim=-1, largest=True).indices
-
             elif 'cur' in self.MODE:
                 # https://github.com/NVIDIA/kvpress/blob/main/kvpress/presses/cur_press.py # Algorithm 1
                 if hasattr(self, 'G'):
@@ -491,9 +488,6 @@ class EvictLayer(DynamicLayer):
                 scores = k2 * v2
                 scores /= scores.sum(dim=-1, keepdim=True) # [bs, n_heads, len]
                 
-                # if self.MODE == 'small_range_cur': # keep large
-                #     ids_large = v_magnitude.topk(self.n_large, dim=-1, largest=True).indices
-                #     scores.scatter_(dim=-1, index=ids_large, value=1.0)
                 scores[:, :, : self.n_sink] = 1.0
                 ids_to_keep = scores.topk(K, dim=-1, largest=True).indices
             else:
