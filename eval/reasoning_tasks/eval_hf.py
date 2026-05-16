@@ -144,7 +144,6 @@ def infer(args):
 
     generate_lens = []
     total_time = 0
-    global_counts = 0
 
     forward_kwargs = {}
     if args.attention_implementation not in ["flash_attention_2", "eager", "spda"]:
@@ -177,7 +176,7 @@ def infer(args):
         print("start batch: ", i, flush=True)
         begin = time.time()
         if args.use_batch_exist:
-            outputs, counts = batch_exist_generate(
+            outputs = batch_exist_generate(
                 model,
                 input_ids=batch_input_ids,
                 attention_mask=attention_mask,
@@ -195,7 +194,6 @@ def infer(args):
                 num_return_sequences=1,
                 **forward_kwargs,
             )
-            counts = 0
 
         end = time.time()
         batch_time = (end - begin) / 60
@@ -210,7 +208,6 @@ def infer(args):
             generate_lens.append(output_tokens - prompt_tokens)
 
         completions = tokenizer.batch_decode(outputs, skip_special_tokens=True)
-        global_counts += counts
         print("finish batch: ", i, flush=True)
         
         # Write after each batch
@@ -224,7 +221,6 @@ def infer(args):
             other_info = {
                 "generate_lens": [generate_lens[i] for i in ids],
                 "total_time": total_time / batch_size,
-                "counts": global_counts // batch_size,
             }
             with open(other_info_filepath, 'w') as f:
                 json.dump(other_info, f)

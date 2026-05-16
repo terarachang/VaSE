@@ -2,7 +2,7 @@ model_arr=('Qwen/Qwen3-4B' 'Qwen/Qwen3-14B')
 model=${model_arr[0]}
 echo $model
 
-python run_gsm8k.py --t_b 512 --mode small_range_sink_sample_attn --smooth --model_name $model --n_large 256 --output_dir tmpp
+python run_gsm8k.py --t_b 512 --mode small_range_sink_sample_attn --smooth --model_name $model --n_large 256
 #python run_gsm8k.py --t_b 512 --mode absmax_sink_sample_attn --smooth --model_name $model --n_large 256
 #python run_gsm8k.py --t_b 512 --mode var_sink_sample_attn --smooth --model_name $model --n_large 256
 #python run_gsm8k.py --t_b 512 --mode l2_sink_sample_attn --smooth --model_name $model --n_large 256

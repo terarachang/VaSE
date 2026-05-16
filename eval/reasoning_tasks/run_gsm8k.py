@@ -34,7 +34,6 @@ def infer(args, all_answers, num_runs):
         completions = completions[:args.limit]
         generate_lens = other_info['generate_lens']
         total_time = other_info['total_time']
-        evict_rate = other_info['counts_evict'] / len(completions)
 
         # check all the correct
         assert len(all_answers) == len(completions), f"data: {len(all_answers)}, gen: {len(completions)}"
@@ -58,7 +57,6 @@ def infer(args, all_answers, num_runs):
         Acc = correct_cnt / len(all_answers)
         total_len = sum(generate_lens)
         print(f"# Acc: {Acc:.1%}")
-        print(f"# Evict rate: {evict_rate:.1%}")
         print("# No Answer:", no_ans_cnt)
         print("# Time:", total_time)
         print("-"*100)
@@ -80,7 +78,6 @@ def infer(args, all_answers, num_runs):
             f.write(f"Max generate length: {max_generate_len}\n")
             f.write(f"Total time: {total_time:.2f}\n")
             f.write(f"Average time per token: {average_time_per_token}\n")
-            f.write(f"Evict rate: {evict_rate}\n")
 
     Acc = sum(Acc_list) / len(Acc_list)
     avg_no_ans_cnt = round(sum(no_ans_list) / len(no_ans_list))
@@ -122,7 +119,6 @@ def run_eval(
     eos_token_id = tokenizer.eos_token_id
 
     generate_lens = []
-    counts_evict = 0
     total_time = 0
     torch.manual_seed(0)
 
@@ -132,7 +128,7 @@ def run_eval(
         begin = time.time()
         print("start ex:", batch_i, flush=True)
         inputs = inputs.to(model.device)
-        outputs, counts = batch_exist_generate(
+        outputs = batch_exist_generate(
             model,
             **inputs,
             max_length=max_tokens,
@@ -152,7 +148,6 @@ def run_eval(
             generate_lens.append(output_tokens - prompt_tokens)
 
         completions = tokenizer.batch_decode(outputs, skip_special_tokens=True)
-        counts_evict += counts
 
         # Write after each batch
         for j in range(total_run):
@@ -165,7 +160,6 @@ def run_eval(
             other_info = {
                 "generate_lens": [generate_lens[i] for i in ids],
                 "total_time": total_time / total_run,
-                "counts_evict": counts_evict / total_run,
             }
             with open(other_info_filepath, 'w') as f:
                 json.dump(other_info, f)
@@ -231,7 +225,6 @@ if __name__ == "__main__":
             forward_kwargs = init_evict_configs(args)
             from modified.transformers.modify_forward import wrap_evict_attn_forward
             wrap_evict_attn_forward(args.model_name)
-            assert args.attention_implementation == 'eager', 'currently only support eager'
         else:
             raise NotImplementedError(f'{args.sparsity_method} is not implemented')
 

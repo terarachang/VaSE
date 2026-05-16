@@ -3,13 +3,12 @@ conda create -yn seer python=3.11
 conda activate seer
 pip install torch==2.4.0
 pip install -r requirements.txt
-pip install -e .
+pip install flash-attn --no-build-isolation
 
 # Run Experiments
-git checkout encode
 cd eval/reasoning_tasks
 bash myscripts/TASK/eval_cur_fixed_gauss.sh and eval_cur_resample_gauss.sh
-Note: in the .sh files, set model_dir="q4" and num_gpus=1 for quick starts
+Note: in the .sh files, you can change num_gpus for data parallelism
 
 # Run Livecodebench
 ## Download livecodebench-v6; I only tested on medium examples (383 in total)
@@ -31,8 +30,8 @@ unzip livecodebench.zip
 
 
 # Understand Repo
-https://github.com/terarachang/SeerAttention/blob/encode/eval/reasoning_tasks/cur.md
-https://github.com/terarachang/SeerAttention/blob/encode/eval/reasoning_tasks/repo_walkthrough.md
+- https://github.com/microsoft/SeerAttention/tree/main/eval/reasoning_tasks
+- https://github.com/terarachang/SeerAttention/blob/encode/eval/reasoning_tasks/repo_walkthrough.md
 
 # Show Results
 - python print_table.py tables/all_Qwen3-4B.json         # all tasks

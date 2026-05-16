@@ -27,7 +27,7 @@ def choose_task_config(model_size):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run tasks using subprocess.")
     parser.add_argument("--model_dir", type=str,
-                        default="deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+                        default="Qwen/Qwen3-14B",
                         help="Model directory path")
     parser.add_argument("--model_size", type=str, default="14B", help="model_size")
     parser.add_argument("--tasks", type=str, default="aime",

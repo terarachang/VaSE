@@ -101,7 +101,7 @@ def batch_exist_generate(
             active_indices_local = torch.nonzero(active_local, as_tuple=False).squeeze(-1)
             # Update the kv cache using indices relative to the current cache.
             print("active batch index", active_indices_local, "len:", generated.size(-1), flush=True)
-            current_cache.batch_select_indices(active_indices_local) #, len(cur_to_orig))
+            current_cache.batch_select_indices(active_indices_local)
         
             if attention_mask is not None:
                 attention_mask = attention_mask[active_indices_local]
@@ -111,5 +111,4 @@ def batch_exist_generate(
         # Prepare the next input tokens using the updated mapping.
         cur_input = generated[cur_to_orig, -1:].clone()
 
-    counter = current_cache.layers[0].counter if hasattr(current_cache.layers[0], 'counter') else 0
-    return generated, counter
+    return generated

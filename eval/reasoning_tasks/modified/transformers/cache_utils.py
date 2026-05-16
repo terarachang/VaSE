@@ -314,8 +314,6 @@ class EvictLayer(DynamicLayer):
         self.n_large = n_large
         self.temperature = temperature
         self.n_sink = 4
-        self.start_evict = False
-        self.counter = 0
         self.cumulative_length = 0
 
         if verbose and layer_idx == 0:
@@ -514,10 +512,6 @@ class EvictLayer(DynamicLayer):
             self.keys = torch.cat([k_compress, self.keys[:, :, -self.residual_length:]], dim=2)
             if self.verbose and self.layer_idx == 0:
                 print(kv_len, '->', self.values.size(2))
-            if not self.start_evict: 
-                self.start_evict = True
-                self.counter += batch_size
-                #if self.layer_idx == 0: print('# Evicted examples:', self.counter)
 
         return self.keys, self.values
 
