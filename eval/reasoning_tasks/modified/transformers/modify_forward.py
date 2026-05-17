@@ -17,9 +17,8 @@ def wrap_evict_attn_forward(model_name_or_path):
         **kwargs: Unpack[FlashAttentionKwargs],
     ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
         input_shape = hidden_states.shape[:-1]            # (B, L)
-        hidden_shape = (*input_shape, -1, self.head_dim)  # for view to [B, L, H, D]
+        hidden_shape = (*input_shape, -1, self.head_dim)  # (B, L, H, D)
 
-        # Project + per-head norm. Transpose to [B, H, L, D] for RoPE.
         query_states = self.q_norm(self.q_proj(hidden_states).view(hidden_shape)).transpose(1, 2)
         key_states = self.k_norm(self.k_proj(hidden_states).view(hidden_shape)).transpose(1, 2)
         value_states = self.v_proj(hidden_states).view(hidden_shape).transpose(1, 2)
@@ -38,7 +37,7 @@ def wrap_evict_attn_forward(model_name_or_path):
         k_cache, v_cache, cache_seqlens = layer.prepare(key_states, value_states)
 
         # Fused append-and-attend: writes new key_states/value_states at offset cache_seqlens
-        # in place, then attends over [0, cache_seqlens + L_new) per row.
+        # then attends over [0, cache_seqlens + L_new) per row.
         attn_output = flash_attn_with_kvcache(
             query_states, k_cache, v_cache,
             k=key_states, v=value_states,

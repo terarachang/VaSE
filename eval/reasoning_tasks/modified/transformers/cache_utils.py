@@ -270,17 +270,7 @@ class EvictCache(Cache):
 
 class EvictLayer(DynamicLayer):
     """
-    KV cache layer backed by pre-allocated [B, max_len, Hkv, D] buffers, designed
-    for `flash_attn_with_kvcache`. The patched attention forward calls
-    `prepare()` to grab buffer refs + current write head, then runs the fused
-    append+attend kernel (which writes new K/V in place), then calls
-    `post_attention_update()` to bump `cache_seqlens` and run eviction when the
-    post-update length crosses a `residual_length` boundary.
-
-    Storage layout note: buffers are [B, S, Hkv, D] for flash-attn; the
-    eviction math (topk/gather/attn-score) still works in [B, H, S, D] and we
-    transpose only the active slice for that computation, then write the
-    compacted result back.
+    KV cache layer backed by pre-allocated [B, max_len, Hkv, D] storage for `flash_attn_with_kvcache`
     """
 
     def __init__(
@@ -316,10 +306,6 @@ class EvictLayer(DynamicLayer):
             )
 
     def lazy_initialization(self, key_states: torch.Tensor, value_states: Optional[torch.Tensor] = None) -> None:
-        # key_states is the first call's new K, shape [B, L_new, Hkv, D] (flash-attn layout).
-        # After the first call, the cache holds L_new tokens; the largest occupancy reached
-        # before any eviction is max(prompt_len, token_budget) + residual_length, because
-        # eviction fires at most residual_length decode steps after kv_len exceeds token_budget.
         batch_size, prompt_len, num_kv_heads, head_dim = key_states.shape
         self.dtype = key_states.dtype
         self.device = key_states.device
@@ -541,8 +527,7 @@ class EvictLayer(DynamicLayer):
             print(cur_len, '->', self.token_budget)
 
     def get_seq_length(self) -> int:
-        # cumulative_length drives HF's position tracking; cache_seqlens is the physical
-        # write head into the pre-allocated buffer and may be smaller after an eviction.
+        # use cumulative_length (not cur_len) for the position_embeddings/rope
         return self.cumulative_length
 
     def batch_select_indices(self, indices: torch.Tensor) -> None:
