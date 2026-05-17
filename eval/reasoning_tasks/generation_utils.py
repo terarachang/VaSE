@@ -1,7 +1,7 @@
 from typing import Optional, List
 import torch
 from transformers import DynamicCache
-from modified.transformers.cache_utils import EvictCache, QuantizedCache
+from modified.transformers.cache_utils import EvictCache
 
 from transformers.generation.logits_process import TopPLogitsWarper
 import time
@@ -19,11 +19,7 @@ def batch_exist_generate(
     and reorganizing the KV cache.
     """
     # Initialize variables
-    if model_kwargs.get('cache_implementation', None) == 'quantized':
-        cache_config = model_kwargs['cache_config'].copy()
-        start_layer = cache_config.pop('start_layer', 0)
-        current_cache = QuantizedCache(config=model.config, **cache_config)
-    elif model_kwargs.get('cache_implementation', None) == 'evict':
+    if model_kwargs.get('cache_implementation', None) == 'evict':
         cache_config = model_kwargs['cache_config'].copy()
         current_cache = EvictCache(config=model.config, **cache_config)
     else:

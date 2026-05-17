@@ -171,9 +171,7 @@ def run_eval(
 
 def set_output_dir(args):
     dir_name = os.path.join(args.output_dir, os.path.basename(args.model_name), args.sparsity_method)
-    if args.sparsity_method == 'Quant':
-        dir_name = os.path.join(dir_name, f'K{args.kbits}V{args.vbits}g{args.q_group_size}')
-    elif args.sparsity_method == 'Evict':
+    if args.sparsity_method == 'eviction':
         dir_name = os.path.join(dir_name, args.eviction_mode, str(args.token_budget))
         if args.rkv_lambda: dir_name += f'_lambda={args.rkv_lambda}'
         if args.smooth: dir_name += '_smooth'
@@ -186,7 +184,7 @@ if __name__ == "__main__":
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     parser = argparse.ArgumentParser()
     parser.add_argument('--max_tokens', type=int, default=4096)
-    parser.add_argument("--t_b", dest="token_budget", type=int, help="only used in sparsity_method = eviction")
+    parser.add_argument("--token_budget", type=int, help="only used in sparsity_method = eviction")
     parser.add_argument('--model_name', type=str, default='Qwen/Qwen3-4B')
     parser.add_argument('--attention_implementation', type=str, default="flash_attention_2")
     parser.add_argument('--split', type=str, default='test')
@@ -197,7 +195,7 @@ if __name__ == "__main__":
     #parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--print_only', action='store_true')
     parser.add_argument('--output_dir', type=str, default='gsm8k')
-    parser.add_argument("--sp", dest="sparsity_method", choices=['None', 'Quant', 'Evict'], type=str, default='Evict')
+    parser.add_argument("--sparsity_method", choices=['dense', 'eviction'], type=str, default='eviction')
     parser.add_argument("--verbose", action="store_true")
     args, _ = parser.parse_known_args()
     parser = expand_parser_for_methods(parser, args.sparsity_method)
@@ -217,11 +215,9 @@ if __name__ == "__main__":
         infer(args, all_answers, args.total_run)
     else:
         # prepare configs and override the forward pass if needed
-        if args.sparsity_method == 'None':
+        if args.sparsity_method == 'dense':
             forward_kwargs = {}
-        elif args.sparsity_method == 'Quant':
-            forward_kwargs = init_quant_configs(args)
-        elif args.sparsity_method == 'Evict':
+        elif args.sparsity_method == 'eviction':
             forward_kwargs = init_evict_configs(args)
             from modified.transformers.modify_forward import wrap_evict_attn_forward
             wrap_evict_attn_forward(args.model_name)

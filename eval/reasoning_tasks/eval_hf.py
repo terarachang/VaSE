@@ -146,9 +146,7 @@ def infer(args):
     total_time = 0
 
     forward_kwargs = {}
-    if "quant" in args.sparsity_method:
-        forward_kwargs = init_quant_configs(args)
-    elif args.sparsity_method == "eviction":
+    if args.sparsity_method == "eviction":
         forward_kwargs = init_evict_configs(args)
         from modified.transformers.modify_forward import wrap_evict_attn_forward
         wrap_evict_attn_forward(model_name_or_path)

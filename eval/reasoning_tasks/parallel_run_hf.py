@@ -81,21 +81,13 @@ if __name__ == "__main__":
 
         if sparsity_method == "eviction":
             param_combinations = [(tb,) for tb in token_budgets]
-        elif "quant" in sparsity_method or sparsity_method == "dense":
+        elif sparsity_method == "dense":
             param_combinations = [()]
         else:
             raise ValueError(f"Unknown sparsity_method: {sparsity_method}")
 
         for params in param_combinations:
-            if "quant" in sparsity_method:
-                param_desc = f"K{args.kbits}V{args.vbits}_g{args.q_group_size}_r{args.residual_length}"
-                cli_params = [
-                    "--kbits", str(args.kbits),
-                    "--vbits", str(args.vbits),
-                    "--residual_length", str(args.residual_length),
-                    "--q_group_size", str(args.q_group_size),
-                ]
-            elif sparsity_method == "eviction":
+            if sparsity_method == "eviction":
                 (token_budget,) = params
                 param_desc = f"budget={token_budget}, {args.eviction_mode}"
                 cli_params = [
