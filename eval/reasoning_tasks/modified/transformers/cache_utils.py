@@ -247,7 +247,7 @@ class EvictLayer(DynamicLayer):
             if self.MODE == 'cur_fixed_gauss':
                 if not hasattr(self, 'G'):
                     r = 20
-                    # per-row G to avoid biased sampling across the batch (~2% acc gain empirically)
+                    # per-row G to avoid biased sampling across the batch (1-2% acc gain empirically)
                     self.G = (torch.randn(batch_size, 1, head_dim, r, device=self.device) / math.sqrt(r)).to(self.dtype)
                 G = self.G
             else:  # cur_resample_gauss

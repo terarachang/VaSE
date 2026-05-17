@@ -13,7 +13,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--token", required=True, help="HuggingFace API token")
     parser.add_argument("--output_dir", default="existing_results", help="Directory to save downloaded files")
-    parser.add_argument("--files", nargs="+", metavar="PATTERN", default=["*.zip"],
+    parser.add_argument("--files", nargs="+", metavar="PATTERN", default=["all_results.zip"],
                         help="Only download files matching these names or glob patterns (e.g. aime* gpqa.zip)")
     parser.add_argument("--list", action="store_true", help="List available zip files and exit")
     args = parser.parse_args()

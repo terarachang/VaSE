@@ -1,6 +1,6 @@
 model_arr=('Qwen/Qwen3-4B')
 model_dir=${model_arr[0]}
-attention_implementation="eager"
+attention_implementation="flash_attention_2"
 max_tokens=32768
 num_gpus=1
 limit=-1
