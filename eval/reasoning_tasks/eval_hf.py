@@ -146,9 +146,6 @@ def infer(args):
     total_time = 0
 
     forward_kwargs = {}
-    if args.attention_implementation not in ["flash_attention_2", "eager", "spda"]:
-        raise ValueError(f"Unknown attention implementation: {args.attention_implementation}")
-
     if "quant" in args.sparsity_method:
         forward_kwargs = init_quant_configs(args)
     elif args.sparsity_method == "eviction":

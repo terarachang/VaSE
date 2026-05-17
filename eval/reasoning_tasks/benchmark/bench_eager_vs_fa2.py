@@ -52,7 +52,7 @@ def fa2_native(q_bshd, k_bshd, v_bshd):
     return flash_attn_func(q_bshd, k_bshd, v_bshd, causal=True)
 
 
-def benchmark(run: Callable, num_warmups: int = 1, num_trials: int = 3) -> float:
+def benchmark(run: Callable, num_warmups: int = 3, num_trials: int = 20) -> float:
     """Benchmark `func` by running it `num_trials`.  Return the average time."""
     for _ in range(num_warmups):
         run()
@@ -69,11 +69,11 @@ def benchmark(run: Callable, num_warmups: int = 1, num_trials: int = 3) -> float
     return mean(times)
 
 
-def make_qkv(args, kv):
+def make_qkv(args, kv_len):
     q = torch.randn(args.B, args.H_q, 1, args.D, dtype=dtype, device=device)
     h_kv = args.H_kv if args.gqa else args.H_q
-    k = torch.randn(args.B, h_kv, kv, args.D, dtype=dtype, device=device)
-    v = torch.randn(args.B, h_kv, kv, args.D, dtype=dtype, device=device)
+    k = torch.randn(args.B, h_kv, kv_len, args.D, dtype=dtype, device=device)
+    v = torch.randn(args.B, h_kv, kv_len, args.D, dtype=dtype, device=device)
     return q, k, v
 
 
@@ -83,18 +83,18 @@ def sweep(args):
     print(f"Decode-step attention: B={args.B}, {mode}, D={args.D}")
     print(f"{'kv_len':>7} | {'eager (ms)':>11} | {'fa2 (ms)':>9} | {'speedup':>7}")
     print("-" * 50)
-    for kv in args.kv_lens:
-        q, k, v = make_qkv(args, kv)
-        e = benchmark(lambda: eager_decode(q, k, v, group))
-        f = benchmark(lambda: fa2_from_hf_layout(q, k, v))
-        print(f"{kv:>7} | {e:>11.3f} | {f:>9.3f} | {e/f:>6.2f}x")
+    for kv_len in args.kv_lens:
+        q, k, v = make_qkv(args, kv_len)
+        eager = benchmark(lambda: eager_decode(q, k, v, group))
+        fa2 = benchmark(lambda: fa2_from_hf_layout(q, k, v))
+        print(f"{kv_len:>7} | {eager:>11.3f} | {fa2:>9.3f} | {eager/fa2:>6.2f}x")
 
 
 def breakdown(args):
-    kv = args.breakdown_kv
+    kv_len = args.breakdown_kv
     group = args.H_q // args.H_kv if args.gqa else 1
-    print(f"\nBreakdown at kv={kv}:")
-    q_bhsd, k_bhsd, v_bhsd = make_qkv(args, kv)
+    print(f"\nBreakdown at kv={kv_len}:")
+    q_bhsd, k_bhsd, v_bhsd = make_qkv(args, kv_len)
     q_bshd = q_bhsd.transpose(1, 2).contiguous()
     k_bshd = k_bhsd.transpose(1, 2).contiguous()
     v_bshd = v_bhsd.transpose(1, 2).contiguous()
@@ -105,7 +105,7 @@ def breakdown(args):
           f"{benchmark(lambda: fa2_native(q_bshd, k_bshd, v_bshd)):.3f} ms")
 
     # Eager broken into its kernel launches (including repeat_kv if GQA).
-    print(f"\nEager kernel-by-kernel at kv={kv}:")
+    print(f"\nEager kernel-by-kernel:")
     ms_rk_k = ms_rk_v = 0.0
     if args.gqa:
         ms_rk_k = benchmark(lambda: repeat_kv(k_bhsd, group))

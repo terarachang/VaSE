@@ -53,6 +53,13 @@ def init_quant_configs(args):
 
 
 def init_evict_configs(args):
+    assert args.token_budget > args.residual_length, (
+        f"token_budget ({args.token_budget}) must be > residual_length ({args.residual_length})"
+    )
+    assert args.token_budget % args.residual_length == 0, (
+        f"token_budget ({args.token_budget}) must be a multiple of residual_length "
+        f"({args.residual_length}) so the residual move in eviction has disjoint src/dst slices"
+    )
     config = {
         "token_budget": args.token_budget,
         "residual_length": args.residual_length,
