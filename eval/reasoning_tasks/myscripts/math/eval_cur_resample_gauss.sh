@@ -1,7 +1,7 @@
 model_dir="Qwen/Qwen3-4B"
 attention_implementation="flash_attention_2"
 max_tokens=32768
-num_gpus=4
+num_gpus=1
 limit=-1
 
 tasks="math"
