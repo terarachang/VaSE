@@ -495,7 +495,6 @@ class EvictLayer(DynamicLayer):
 
             ## Eviction; keep `ids_to_keep` and lastest cache
             assert ids_to_keep.size(-1) == self.token_budget - self.residual_length
-            ids_to_keep = ids_to_keep.sort(dim=-1).values # preserve positional order so sink tokens stay at the beginning
             ids_to_keep = ids_to_keep[..., None].expand(-1, -1, -1, head_dim)
 
             v_compress = torch.gather(v_candidates, dim=2, index=ids_to_keep)
