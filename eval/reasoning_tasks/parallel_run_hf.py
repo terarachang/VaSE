@@ -11,9 +11,9 @@ from my_utils import *
 def choose_task_config(model_size):
     if model_size != "32B":
         task_config = {
-            "aime25":        {"bs": 8,  "total_run": 16, "n_examples": 30},
-            "aime26":        {"bs": 8,  "total_run": 16, "n_examples": 30},
-            "hmmt":          {"bs": 8,  "total_run": 16, "n_examples": 60},
+            "aime25":        {"bs": 16,  "total_run": 16, "n_examples": 30},
+            "aime26":        {"bs": 16,  "total_run": 16, "n_examples": 30},
+            "hmmt":          {"bs": 16,  "total_run": 16, "n_examples": 60},
             "math":          {"bs": 8,  "total_run": 8,  "n_examples": 500},
             "gpqa":          {"bs": 8,  "total_run": 8,  "n_examples": 198},
             "livecodebench": {"bs": 8,  "total_run": 8,  "n_examples": 383},
