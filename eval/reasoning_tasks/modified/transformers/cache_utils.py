@@ -266,7 +266,6 @@ class EvictLayer(DynamicLayer):
             raise NotImplementedError(f"{self.MODE} not matched in cache_utils.py!")
 
         assert ids_to_keep.size(-1) == K
-        ids_to_keep = ids_to_keep.sort(dim=-1).values  # preserve positional order so sink tokens stay at the front
         ids_expand = ids_to_keep[..., None].expand(-1, -1, -1, head_dim)
 
         k_compress = torch.gather(k_candidates, dim=2, index=ids_expand)
