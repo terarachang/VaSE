@@ -1,15 +1,15 @@
 model_dir="Qwen/Qwen3-4B"
 attention_implementation="flash_attention_2"
 max_tokens=32768
-num_gpus=1
+num_gpus=6
 limit=-1
 
-tasks="gpqa"
+tasks="hmmt"
 
-token_budget="2048"
+token_budget="4096"
 
-mode='small_range_sink_sample_attn'
-n_large=512
+mode='range_sink_sample_attn'
+n_large=1024
 output_dir="./${tasks}/$(basename "$model_dir")/${mode}"
 
 python parallel_run_hf.py \

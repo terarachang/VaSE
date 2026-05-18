@@ -1,15 +1,16 @@
 model_dir="Qwen/Qwen3-4B"
 attention_implementation="flash_attention_2"
 max_tokens=32768
-num_gpus=6
+num_gpus=1
 limit=-1
 
-tasks="hmmt"
+tasks="livecodebench"
 
-token_budget="4096"
+#token_budget="2048,4096,6144,8192"
+token_budget="2048"
 
-mode='small_range_sink_sample_attn'
-n_large=1024
+mode='range_sink_sample_attn'
+n_large=512
 output_dir="./${tasks}/$(basename "$model_dir")/${mode}"
 
 python parallel_run_hf.py \

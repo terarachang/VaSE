@@ -4,12 +4,13 @@ max_tokens=32768
 num_gpus=1
 limit=-1
 
-tasks="math"
+tasks="aime25"
 
-token_budget="1024"
+#token_budget="2048,4096,6144,8192"
+token_budget="4096"
 
-mode='small_range_sink_sample_attn'
-n_large=256
+mode='range_sink_sample_attn'
+n_large=1024
 output_dir="./${tasks}/$(basename "$model_dir")/${mode}"
 
 python parallel_run_hf.py \

@@ -10,8 +10,7 @@ python run_gsm8k.py --token_budget 512 --mode cur_resample_gauss --model_name $m
 # SnapKV
 python run_gsm8k.py --token_budget 512 --mode attn --smooth --model_name $model
 # VASE-Attn variants
-python run_gsm8k.py --token_budget 512 --mode small_range_sink_sample_attn --smooth --model_name $model --n_large 256
-python run_gsm8k.py --token_budget 512 --mode absmax_sink_sample_attn --smooth --model_name $model --n_large 256
+python run_gsm8k.py --token_budget 512 --mode range_sink_sample_attn --smooth --model_name $model --n_large 256
 python run_gsm8k.py --token_budget 512 --mode var_sink_sample_attn --smooth --model_name $model --n_large 256
 python run_gsm8k.py --token_budget 512 --mode l2_sink_sample_attn --smooth --model_name $model --n_large 256
 # RKV variants

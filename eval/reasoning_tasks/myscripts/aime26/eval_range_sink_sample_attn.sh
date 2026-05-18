@@ -9,7 +9,7 @@ tasks="aime26"
 #token_budget="2048,4096,6144,8192"
 token_budget="4096"
 
-mode='small_range_sink_sample_attn'
+mode='range_sink_sample_attn'
 n_large=1024
 output_dir="./${tasks}/$(basename "$model_dir")/${mode}"
 

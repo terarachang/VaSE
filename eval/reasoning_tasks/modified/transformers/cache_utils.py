@@ -158,6 +158,7 @@ class EvictLayer(DynamicLayer):
             attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_cache.dtype)
             scores = attn_weights.mean(-2)  # avg over q_len (window_size)
             if self.smooth:
+                # https://github.com/NVIDIA/kvpress/blob/main/kvpress/presses/snapkv_press.py#L96
                 orig_shape = scores.shape
                 scores = scores.view(batch_size, q_heads, -1)
                 kernel_size = 5
@@ -206,20 +207,11 @@ class EvictLayer(DynamicLayer):
                 similarities = cal_redundancy(k_candidates)
                 attn_scores = attn_scores * self.rkv_lambda - similarities * (1 - self.rkv_lambda)
 
-        if self.MODE in ['small_range', 'small_range_sink', 'large_range']:
-            ids_to_keep = v_magnitude.topk(K, dim=-1, largest=('small' in self.MODE)).indices
-
-        elif self.MODE in ['attn', 'attn_rkv', 'attn_range']:
-            if self.MODE == 'attn_range':
-                attn_scores = attn_scores * v_magnitude
+        if self.MODE in ['attn', 'attn_rkv']:
             ids_to_keep = attn_scores.topk(K, dim=-1, largest=True).indices
 
-        elif self.MODE == 'attn_sample':
-            ids_to_keep = multinomial_sample(attn_scores, K)
-
-        elif self.MODE in ['small_range_attn', 'small_range_attn_rkv',
-            'small_range_sample_attn', 'small_range_sink_sample_attn',
-            'absmax_sink_sample_attn', 'var_sink_sample_attn', 'l2_sink_sample_attn']:
+        elif self.MODE in ['range_attn', 'range_sample_attn', 'range_sink_sample_attn',
+            'var_sink_sample_attn', 'l2_sink_sample_attn']:
             ids_large = v_magnitude.topk(self.n_large, dim=-1, largest=True).indices
             if 'sample' in self.MODE:
                 attn_scores.scatter_(dim=-1, index=ids_large, value=0.0)
@@ -227,20 +219,6 @@ class EvictLayer(DynamicLayer):
                 ids_to_keep = torch.cat([ids_large, ids_attn], dim=-1)
             else:
                 ids_to_keep = select_remaining_based_on_scores(ids_large, attn_scores, K - self.n_large)
-
-        elif self.MODE == 'attn_random':
-            random_scores = torch.rand(batch_size, n_heads, v_candidates.size(2), device=self.device)
-            ids_large = random_scores.topk(self.n_large, dim=-1, largest=True).indices
-            ids_to_keep = select_remaining_based_on_scores(ids_large, attn_scores, K - self.n_large)
-
-        elif self.MODE in ['evict_large_range_random', 'keep_sink_large_range_random']:
-            ids_large = v_magnitude.topk(self.n_large, dim=-1, largest=True).indices
-            random_scores = torch.rand(batch_size, n_heads, v_candidates.size(2), device=self.device)
-            if self.MODE == 'evict_large_range_random':
-                random_scores.scatter_(dim=-1, index=ids_large, value=float('-inf'))
-                ids_to_keep = random_scores.topk(K, dim=-1, largest=True).indices
-            else:
-                ids_to_keep = select_remaining_based_on_scores(ids_large, random_scores, K - self.n_large)
 
         elif 'cur' in self.MODE:
             # https://github.com/NVIDIA/kvpress/blob/main/kvpress/presses/cur_press.py
@@ -262,14 +240,27 @@ class EvictLayer(DynamicLayer):
             scores[:, :, :self.n_sink] = 1.0
             ids_to_keep = scores.topk(K, dim=-1, largest=True).indices
 
+        # == Ablation ==
+        elif self.MODE == 'evict_large_range':
+            # Note: sink tokens have small range (value-state drain)
+            ids_to_keep = v_magnitude.topk(K, dim=-1, largest=False).indices
+
+        elif self.MODE == 'attn_sample':
+            ids_to_keep = multinomial_sample(attn_scores, K)
+
+        elif self.MODE == 'attn_random':
+            random_scores = torch.rand(batch_size, n_heads, v_candidates.size(2), device=self.device)
+            ids_large = random_scores.topk(self.n_large, dim=-1, largest=True).indices
+            ids_to_keep = select_remaining_based_on_scores(ids_large, attn_scores, K - self.n_large)
+
         else:
             raise NotImplementedError(f"{self.MODE} not matched in cache_utils.py!")
 
         assert ids_to_keep.size(-1) == K
-        ids_expand = ids_to_keep[..., None].expand(-1, -1, -1, head_dim)
+        ids_to_keep = ids_to_keep[..., None].expand(-1, -1, -1, head_dim)
 
-        k_compress = torch.gather(k_candidates, dim=2, index=ids_expand)
-        v_compress = torch.gather(v_candidates, dim=2, index=ids_expand)
+        k_compress = torch.gather(k_candidates, dim=2, index=ids_to_keep)
+        v_compress = torch.gather(v_candidates, dim=2, index=ids_to_keep)
         self.k_cache[:, :K].copy_(k_compress.transpose(1, 2))
         self.v_cache[:, :K].copy_(v_compress.transpose(1, 2))
 
