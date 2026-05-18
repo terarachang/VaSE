@@ -230,7 +230,7 @@ class EvictLayer(DynamicLayer):
                 G = self.G
             else:  # cur_resample_gauss
                 r = 20
-                G = (torch.randn(batch_size, 1, head_dim, r, device=self.device) / math.sqrt(r)).to(k_candidates.dtype)
+                G = (torch.randn(batch_size, 1, head_dim, r, device=self.device) / math.sqrt(r)).to(self.dtype)
             keys = k_candidates @ G
             values = v_candidates @ G
             k2 = (keys ** 2).sum(dim=-1)
@@ -264,14 +264,15 @@ class EvictLayer(DynamicLayer):
         self.k_cache[:, :K].copy_(k_compress.transpose(1, 2))
         self.v_cache[:, :K].copy_(v_compress.transpose(1, 2))
 
-        # Move residual block
+        # Move recency buffer
         self.k_cache[:, K:self.token_budget].copy_(self.k_cache[:, cur_len - residual:cur_len])
         self.v_cache[:, K:self.token_budget].copy_(self.v_cache[:, cur_len - residual:cur_len])
 
         self.cache_seqlens.fill_(self.token_budget)
 
         if self.verbose and self.layer_idx == 0:
-            print(cur_len, '->', self.token_budget)
+            print(f'Buffer: {cur_len - residual}:{cur_len} -> {K}:{self.token_budget}', end=' | ')
+            print(f'Cache size: {cur_len} -> {self.token_budget}')
 
     def get_seq_length(self) -> int:
         # use cumulative_length (not cur_len) for the position_embeddings/rope
