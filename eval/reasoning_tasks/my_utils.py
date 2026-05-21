@@ -1,10 +1,6 @@
-import argparse
 import os
 import json
-import torch
-import numpy as np
 from datasets import load_dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 def get_evict_args(parser):
@@ -133,8 +129,11 @@ def load_raw_gsm8k(tokenizer, n_samples, split, model_name): # for vllm
 
 
 
-def get_ckpt_start_i(output_runnum_subdir, completion_filename="completions.jsonl"):
-    completion_filepath = os.path.join(output_runnum_subdir, completion_filename)
+def get_ckpt_start_i(output_dir, run_id, batch_size,
+                     completion_filename="completions.jsonl",
+                     other_info_filename="other_info.json"):
+    """Return (start_i, generate_lens, batch_times) for resuming a run."""
+    completion_filepath = os.path.join(output_dir, f"run_{run_id}", completion_filename)
     lines = []
     if os.path.exists(completion_filepath):
         print(f"Loading checkpoint from {completion_filepath}")
@@ -143,8 +142,20 @@ def get_ckpt_start_i(output_runnum_subdir, completion_filename="completions.json
                 item = json.loads(line.strip())
                 lines.append(item["completion"])
     start_i = len(lines)
-    print(f"Resuming from {start_i}...")
-    return start_i
+    print(f"Resuming from ex-{start_i}...")
+
+    generate_lens = [[] for _ in range(batch_size)]
+    batch_times = []
+    if start_i > 0:
+        for j in range(batch_size):
+            info_path = os.path.join(output_dir, f"run_{run_id + j}", other_info_filename)
+            with open(info_path) as f:
+                info = json.load(f)
+            generate_lens[j] = list(info['generate_lens'])
+            if j == 0:
+                batch_times = list(info['batch_times'])
+
+    return start_i, generate_lens, batch_times
 
 
 def visualize_token(tokenizer, tokens: list[int]):

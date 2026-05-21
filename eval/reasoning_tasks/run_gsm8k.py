@@ -5,6 +5,7 @@ import time
 
 import torch
 
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from generation_utils import batch_exist_generate
 from my_utils import *
 from Utils.grader import *
@@ -17,8 +18,8 @@ def infer(args, all_answers, num_runs):
     total_time_list = []
     no_ans_list = []
 
-    for i in range(args.run_id, num_runs):
-        output_runnum_subdir = os.path.join(args.output_dir, f"run_{i}")
+    for run_i in range(args.run_id, num_runs):
+        output_runnum_subdir = os.path.join(args.output_dir, f"run_{run_i}")
         completion_filepath = os.path.join(output_runnum_subdir, "completions.jsonl")
         other_info_filepath = os.path.join(output_runnum_subdir, "other_info.json")
 
@@ -39,9 +40,9 @@ def infer(args, all_answers, num_runs):
         assert len(all_answers) == len(completions), f"data: {len(all_answers)}, gen: {len(completions)}"
         correct_cnt = 0
         no_ans_cnt = 0
-        for i in range(len(completions)):
-            gt_ans = all_answers[i]
-            generated_responses = [completions[i]]
+        for ex_i in range(len(completions)):
+            gt_ans = all_answers[ex_i]
+            generated_responses = [completions[ex_i]]
             generated_answers = [extract_answer(generated_response) for generated_response in generated_responses]
             is_correct_list = [check_is_correct(generated_answer, gt_ans) for generated_answer in generated_answers]
             is_correct = any(is_correct_list)
@@ -49,7 +50,7 @@ def infer(args, all_answers, num_runs):
                 correct_cnt += 1
             else:
                 if args.verbose:
-                    print(completions[i])
+                    print(completions[ex_i])
                     print('truth:', gt_ans, 'model:',  generated_answers)
                     breakpoint()
                 if len(generated_answers) == 1 and generated_answers[0] == '': no_ans_cnt += 1
@@ -58,12 +59,10 @@ def infer(args, all_answers, num_runs):
         total_len = sum(generate_lens)
         print(f"# Acc: {Acc:.1%}")
         print("# No Answer:", no_ans_cnt)
-        print("# Time:", total_time)
         print("-"*100)
 
         average_generate_len = sum(generate_lens) / len(generate_lens)
         max_generate_len = max(generate_lens)
-        average_time_per_token = total_time / sum(generate_lens)
         
         Acc_list.append(Acc)
         generate_lens_list.extend(generate_lens)
@@ -76,8 +75,6 @@ def infer(args, all_answers, num_runs):
             f.write(f"Acc: {Acc:.4f}\n")
             f.write(f"Average generate length: {average_generate_len}\n")
             f.write(f"Max generate length: {max_generate_len}\n")
-            f.write(f"Total time: {total_time:.2f}\n")
-            f.write(f"Average time per token: {average_time_per_token}\n")
 
     Acc = sum(Acc_list) / len(Acc_list)
     avg_no_ans_cnt = round(sum(no_ans_list) / len(no_ans_list))
@@ -88,13 +85,12 @@ def infer(args, all_answers, num_runs):
     average_generate_len = sum(generate_lens_list) / len(generate_lens_list)
     max_generate_len = max(generate_lens_list)
     print(f"Max generate length: {max_generate_len}")
-    print(f"Average generate length: {int(average_generate_len)}")
+    print(f"Average generate length: {round(average_generate_len)}")
 
     total_time = sum(total_time_list) / len(total_time_list)
-    #average_time_per_token = sum(total_time_list) / sum(generate_lens_list)
-    average_token_per_sec = sum(generate_lens_list) / (sum(total_time_list)*60)
-    print(f"Average time: {int(total_time)} min")
-    print(f"Average token per sec: {int(average_token_per_sec)}")
+    average_token_per_sec = sum(generate_lens_list) / sum(total_time_list)
+    print(f"Average time (min): {round(total_time/60)}")
+    print(f"Average token per sec: {round(average_token_per_sec)}")
 
     overall_summary_filepath = os.path.join(args.output_dir, "overall_summary.txt")
     with open(overall_summary_filepath, "w") as f:
@@ -102,10 +98,10 @@ def infer(args, all_answers, num_runs):
         f.write(f"# Examples: {args.limit}\n")
         f.write(f"Average Acc: {Acc:.2%}\n")
         f.write(f"No ans count: {avg_no_ans_cnt}\n")
-        f.write(f"Average generate length: {int(average_generate_len)}\n")
+        f.write(f"Average generate length: {round(average_generate_len)}\n")
         f.write(f"Max generate length: {max_generate_len}\n")
-        f.write(f"Average time: {int(total_time)} min\n")
-        f.write(f"Average token per sec: {int(average_token_per_sec)}\n")
+        f.write(f"Average time (min): {total_time/60:.1f}\n")
+        f.write(f"Average token per sec: {round(average_token_per_sec)}\n")
     print("Results saved to ", overall_summary_filepath)
 
 
@@ -122,7 +118,7 @@ def run_eval(
     total_time = 0
     torch.manual_seed(0)
 
-    start_i = get_ckpt_start_i(os.path.join(args.output_dir, "run_0"))
+    start_i, _, _ = get_ckpt_start_i(args.output_dir, run_id=0, batch_size=1)
     for batch_i, inputs in enumerate(tokenized_data):
         if batch_i < start_i: continue
         begin = time.time()
@@ -137,9 +133,9 @@ def run_eval(
             **forward_kwargs)
 
         end = time.time()
-        batch_time = (end - begin) / 60
+        batch_time = end - begin
         total_time = total_time + batch_time
-        print("finish ex:", batch_i, "time:", batch_time, "output:", outputs.shape, flush=True)
+        print("finish ex:", batch_i, "output:", outputs.shape, flush=True)
 
         for j in range(len(outputs)):
             output_seq = outputs[j]

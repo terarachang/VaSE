@@ -1,5 +1,5 @@
 import json
-from transformers import AutoConfig
+from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
 import torch
 import re
 import importlib.util
@@ -19,10 +19,6 @@ from math import comb
 from my_utils import *
 from generation_utils import batch_exist_generate
 from typing import Optional, Tuple
-
-
-def parse_list(arg):
-    return arg.split(',')
 
 
 def parse_args():
@@ -96,8 +92,6 @@ def infer(args):
     print(f"current eval model: {model_name_or_path}")
     device = f"cuda:{args.rank}"
 
-    generate_lens = []
-    
     examples = load_data(args.data_name, args.split, args.data_dir)
     print(f"{args.data_name}, # Examples: {len(examples)}")
     print('-'*100)
@@ -136,14 +130,13 @@ def infer(args):
     completion_filename = f"completions_shard{args.ex_start_i}.jsonl" if is_data_parallel else "completions.jsonl"
     other_info_filename = f"other_info_shard{args.ex_start_i}.json" if is_data_parallel else "other_info.json"
 
-    output_runnum_subdir = os.path.join(args.output_dir, f"run_{args.run_id}")
-    start_i = get_ckpt_start_i(output_runnum_subdir, completion_filename)
+    start_i, generate_lens, batch_times = get_ckpt_start_i(
+        args.output_dir, args.run_id, args.batch_size,
+        completion_filename, other_info_filename,
+    )
     if start_i >= len(examples):
         print(f"Already completed. Exit.")
         exit()
-
-    generate_lens = []
-    total_time = 0
 
     forward_kwargs = {}
     if args.sparsity_method == "eviction":
@@ -191,43 +184,38 @@ def infer(args):
             )
 
         end = time.time()
-        batch_time = (end - begin) / 60
-        total_time = total_time + batch_time
-        print("get output in batch: ", i, "time:", batch_time, "output:", outputs.shape, outputs.device, flush=True)
+        batch_time = end - begin
+        batch_times.append(batch_time)
+        print("get output in batch: ", i, "time (min):", round(batch_time / 60), "output:", outputs.shape, outputs.device, flush=True)
         
 
         for j in range(len(outputs)):
             output_seq = outputs[j]
             output_tokens = (output_seq != eos_token_id).sum().item()
             prompt_tokens = (batch_input_ids[j] != eos_token_id).sum().item()
-            generate_lens.append(output_tokens - prompt_tokens)
+            generate_lens[j].append(output_tokens - prompt_tokens)
 
         completions = tokenizer.batch_decode(outputs, skip_special_tokens=True)
         print("finish batch: ", i, flush=True)
-        
+
         # Write after each batch
         for j in range(batch_size):
             output_runnum_subdir = os.path.join(args.output_dir, f"run_{args.run_id+j}")
             os.makedirs(output_runnum_subdir, exist_ok=True)
             completion_filepath = os.path.join(output_runnum_subdir, completion_filename)
             other_info_filepath = os.path.join(output_runnum_subdir, other_info_filename)
-            ids = torch.arange(0, len(generate_lens), batch_size) + j
 
             other_info = {
-                "generate_lens": [generate_lens[i] for i in ids],
-                "total_time": total_time / batch_size,
+                "generate_lens": generate_lens[j],
+                "batch_times": batch_times,
             }
             with open(other_info_filepath, 'w') as f:
                 json.dump(other_info, f)
             with open(completion_filepath, 'a') as f:
                 f.write(json.dumps({"completion": completions[j]}) + '\n')
 
-        
+
     print("llm generate done")
-
-    with open(other_info_filepath, 'w') as f:
-        json.dump(other_info, f)
-
     print(f"Successfully saved run{args.run_id}!")
 
     

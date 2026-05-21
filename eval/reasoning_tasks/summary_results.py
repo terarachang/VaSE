@@ -12,6 +12,7 @@ from Utils.data_loader import load_data
 from Utils.math_normalization import *
 from Utils.grader import *
 from Utils.livecodebench import compute_scores as livecodebench_compute_scores
+from parallel_run_hf import choose_task_config
 import pickle
 import subprocess
 
@@ -34,24 +35,18 @@ def merge_shard_files(output_runnum_subdir):
         glob.glob(os.path.join(output_runnum_subdir, "other_info_shard*.json")),
         key=lambda f: int(re.search(r'shard(\d+)', f).group(1))
     )
-    if not info_files:
-        return
-    merged_lens, merged_time = [], 0.0
+
+    merged_lens, merged_batch_times = [], []
     for info_file in info_files:
         with open(info_file, 'r') as f:
             info = json.load(f)
-        merged_lens.extend(info.get('generate_lens', []))
-        merged_time += info.get('total_time', 0.0)
-    n = len(info_files)
-    merged_info = {k: v for k, v in json.load(open(info_files[0])).items()}
+        merged_lens.extend(info['generate_lens'])
+        merged_batch_times.extend(info.get('batch_times', []))
+    merged_info = {}
     merged_info['generate_lens'] = merged_lens
-    merged_info['total_time'] = merged_time / n
+    merged_info['batch_times'] = merged_batch_times
     with open(os.path.join(output_runnum_subdir, "other_info.json"), 'w') as f:
         json.dump(merged_info, f)
-
-
-def parse_list(arg):
-    return arg.split(',')
 
 
 def parse_args():
@@ -72,7 +67,6 @@ def parse_args():
 
 def infer(args):
     print(args)
-    generate_lens = []
     examples = load_data(args.data_name, args.split, args.data_dir)
 
     limit = args.limit
@@ -88,14 +82,23 @@ def infer(args):
             if limit > 0:
                 jobs = jobs[:limit]
 
+
+    for run_i in range(args.total_run):
+        merge_shard_files(os.path.join(args.output_dir, f"run_{run_i}"))
+    # batch_times is identical across run_0 ... run_{bs-1}
+    bs = choose_task_config(model_size=None)[args.data_name]["bs"]
+    batch_times = []
+    for run_i in range(0, args.total_run, bs):
+        with open(os.path.join(args.output_dir, f"run_{run_i}", "other_info.json"), 'r') as f:
+            batch_times.extend(json.load(f)['batch_times'])
+    total_time = sum(batch_times)
+
     generate_lens_list = []
-    total_time_list = []
     no_ans_list = []
     total_is_correct_arr = np.zeros((args.total_run, len(examples)), dtype=bool)
 
     for run_i in range(args.total_run):
         output_runnum_subdir = os.path.join(args.output_dir, f"run_{run_i}")
-        merge_shard_files(output_runnum_subdir)
 
         completion_filepath = os.path.join(output_runnum_subdir, "completions.jsonl")
 
@@ -107,14 +110,13 @@ def infer(args):
                 completions.append(item["completion"])
         if limit > 0:
             completions = completions[:limit]
-        
+
         other_info_filepath = os.path.join(output_runnum_subdir, "other_info.json")
 
         with open(other_info_filepath, 'r') as f:
             other_info = json.load(f)
 
         generate_lens = other_info['generate_lens']
-        total_time = other_info['total_time']
 
         print(f"Successfully loaded run{run_i}!")
 
@@ -149,19 +151,14 @@ def infer(args):
                     if len(generated_answers) == 1 and generated_answers[0] == '': no_ans_cnt += 1
 
             Acc = total_is_correct_arr[run_i].mean()
-            total_len = sum(generate_lens)
             print("# Examples:", len(completions))
             print(f"# Acc: {Acc:.1%}")
-            print("# No Answer:", no_ans_cnt)
-            print("# Time:", total_time)
             print("-"*100)
 
         average_generate_len = sum(generate_lens) / len(generate_lens)
         max_generate_len = max(generate_lens)
 
-        average_time_per_token = total_time / sum(generate_lens)
         generate_lens_list.extend(generate_lens)
-        total_time_list.append(total_time)
         no_ans_list.append(no_ans_cnt)
 
         summary_filepath = os.path.join(output_runnum_subdir, "summary.txt")
@@ -171,8 +168,7 @@ def infer(args):
             f.write(f"Acc: {Acc:.4f}\n")
             f.write(f"Average generate length: {average_generate_len}\n")
             f.write(f"Max generate length: {max_generate_len}\n")
-            f.write(f"Total time: {total_time:.2f}\n")
-            f.write(f"Average time per token: {average_time_per_token}\n")
+            f.write(f"Total time (min): {total_time/60:.1f}\n")
             f.write("\n")
 
 
@@ -186,26 +182,23 @@ def infer(args):
     average_generate_len = sum(generate_lens_list) / len(generate_lens_list)
     max_generate_len = max(generate_lens_list)
     print(f"Max generate length: {max_generate_len}")
-    print(f"Average generate length: {int(average_generate_len)}")
+    print(f"Average generate length: {round(average_generate_len)}")
 
-    total_time = sum(total_time_list) / len(total_time_list)
-    #average_time_per_token = sum(total_time_list) / sum(generate_lens_list)
-    average_token_per_sec = sum(generate_lens_list) / (sum(total_time_list)*60)
-    print(f"Average time: {int(total_time)} min")
-    print(f"Average token per sec: {int(average_token_per_sec)}")
+    average_token_per_sec = sum(generate_lens_list) / total_time
+    print(f"Total time (min): {total_time/60:.1f}")
+    print(f"Average token per sec: {round(average_token_per_sec)}")
 
     overall_summary_filepath = os.path.join(args.output_dir, "overall_summary.txt")
     with open(overall_summary_filepath, "w") as f:
-        #f.write(f"Model Path: {args.model_name_or_path}\n")
         f.write(f"# Examples: {len(examples)}\n")
         f.write(f"Total_run: {args.total_run}\n")
         f.write(f"Acc range: [{Acc_list.min():.2%}, {Acc_list.max():.2%}]\n")
         f.write(f"Average Acc: {Acc_list.mean():.2%}\n")
         f.write(f"No ans count: {avg_no_ans_cnt}\n")
-        f.write(f"Average generate length: {int(average_generate_len)}\n")
+        f.write(f"Average generate length: {round(average_generate_len)}\n")
         f.write(f"Max generate length: {max_generate_len}\n")
-        f.write(f"Average time: {int(total_time)} min\n")
-        f.write(f"Average token per sec: {int(average_token_per_sec)}\n")
+        f.write(f"Total time (min): {total_time/60:.1f}\n")
+        f.write(f"Average token per sec: {round(average_token_per_sec)}\n")
         f.write("\n")
 
 
