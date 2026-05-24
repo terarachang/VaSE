@@ -2,7 +2,7 @@
   "AIME25": [
     {
       "Method": "RKV",
-      "Acc": 53.75
+      "Acc": 54.58
     },
     {
       "Method": "CUR Fixed",
@@ -14,7 +14,7 @@
     },
     {
       "Method": "Sample Attn + V",
-      "Acc": 63.58
+      "Acc": 63.96
     },
     {
       "Method": "SeerR",

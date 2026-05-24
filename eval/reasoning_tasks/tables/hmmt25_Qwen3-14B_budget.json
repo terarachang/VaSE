@@ -2,7 +2,7 @@
   "2048": [
     {
       "Method": "RKV",
-      "Acc": 25.62
+      "Acc": 31.46
     },
     {
       "Method": "CUR Fixed",
@@ -14,7 +14,7 @@
     },
     {
       "Method": "Sample Attn + V",
-      "Acc": 32.08
+      "Acc": 35.42
     },
     {
       "Method": "Full",
@@ -60,7 +60,7 @@
     },
     {
       "Method": "Sample Attn + V",
-      "Acc": 53.54
+      "Acc": 54.48
     },
     {
       "Method": "Full",
