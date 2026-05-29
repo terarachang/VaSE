@@ -157,27 +157,27 @@
   "LiveCodeBench": [
     {
       "Method": "CUR Fixed",
-      "Acc": 33.98
+      "Acc": 34.56
     },
     {
       "Method": "CUR Resample",
-      "Acc": 60.74
+      "Acc": 61.85
     },
     {
       "Method": "RKV",
-      "Acc": 61.68
+      "Acc": 62.60
     },
     {
       "Method": "Sample Attn + V",
-      "Acc": 61.81
+      "Acc": 63.45
     },
     {
       "Method": "SeerR",
-      "Acc": 44.16
+      "Acc": 45.30
     },
     {
       "Method": "Full",
-      "Acc": 78.79
+      "Acc": 80.22
     }
   ]
 }
