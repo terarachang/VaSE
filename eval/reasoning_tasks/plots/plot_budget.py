@@ -9,6 +9,7 @@ plus a horizontal "Full" reference line.
 """
 
 import os
+import json
 import matplotlib.pyplot as plt
 from matplotlib.transforms import blended_transform_factory
 
@@ -26,39 +27,53 @@ plt.rcParams.update({
 })
 
 # ── Data ─────────────────────────────────────────────────────────────────────
-BUDGETS = [2048, 4096, 6144]
-
-DATA = {
-    "AIME26": {
-        "RKV":             [40.00, 60.21, 69.37],
-        "CUR Fixed":       [34.79, 61.25, 68.75],
-        "CUR Resample":    [57.92, 68.75, 75.42],
-        "Sample Attn + V": [48.54, 72.29, 73.12],
-        "Full":            76.04,
-        "FullTokens":      15325,
-    },
-    "HMMT25": {
-        "RKV":             [25.62, 44.58, 50.00],
-        "CUR Fixed":       [24.58, 39.58, 47.71],
-        "CUR Resample":    [35.00, 49.38, 51.04],
-        "Sample Attn + V": [32.08, 50.00, 53.54],
-        "Full":            54.79,
-        "FullTokens":      17847,
-    },
+# Accuracies and the "Full" reference are read from the tables/*_budget.json
+# files. Each file maps a budget (string key) -> list of {"Method", "Acc"}.
+# FullTokens (the dense-cache mean token count) is not stored in those files,
+# so it stays as a constant here.
+TABLE_FILES = {
+    "AIME26": "tables/aime26_Qwen3-14B_budget.json",
+    "HMMT25": "tables/hmmt25_Qwen3-14B_budget.json",
 }
+FULL_TOKENS = {
+    "AIME26": 15325,
+    "HMMT25": 17847,
+}
+
+def load_task_data(path, full_tokens):
+    with open(path) as f:
+        raw = json.load(f)
+    budgets = sorted(int(b) for b in raw)
+    entry = {"FullTokens": full_tokens}
+    for b in budgets:
+        for row in raw[str(b)]:
+            method, acc = row["Method"], row["Acc"]
+            if method == "Full":
+                entry["Full"] = acc
+            else:
+                entry.setdefault(method, []).append(acc)
+    return budgets, entry
+
+DATA = {}
+BUDGETS = None
+for task, path in TABLE_FILES.items():
+    budgets, entry = load_task_data(path, FULL_TOKENS[task])
+    if BUDGETS is None:
+        BUDGETS = budgets
+    DATA[task] = entry
 
 # ── Palette (consistent with plot_pilot_study.py) ───────────────────────────
 COLORS = {
-    "RKV":             "#7E8A99",  # neutral grey (baseline)
-    "CUR Fixed":       "#E48A6B",  # warm orange (baseline)
-    "CUR Resample":    "#5DA975",  # green — improved CUR
-    "Sample Attn + V": "#1F4F66",  # deep blue — our flagship
+    "RKV":             "#A87BA0",  # muted purple
+    "CUR Fixed":       "#D08A78",  # warm orange
+    "CUR Resample":    "#5C7C92",  # blue-grey
+    "Sample Attn + V": "#1F4F66",  # deep blue
 }
 MARKERS = {
     "RKV":             "o",
-    "CUR Fixed":       "s",
-    "CUR Resample":    "^",
-    "Sample Attn + V": "D",
+    "CUR Fixed":       "D",
+    "CUR Resample":    "D",
+    "Sample Attn + V": "o",
 }
 DISPLAY_NAMES = {
     "RKV":             "R-KV",
@@ -67,7 +82,7 @@ DISPLAY_NAMES = {
     "Sample Attn + V": "VaSE-AttnV",
     "Full":            "Full",
 }
-METHOD_ORDER = ["RKV", "CUR Fixed", "CUR Resample", "Sample Attn + V"]
+METHOD_ORDER = ["CUR Fixed", "RKV", "CUR Resample", "Sample Attn + V"]
 
 FULL_COLOR = "#242424"
 GRID_GREY  = "#E7E7E7"
@@ -82,11 +97,11 @@ for ax, task in zip(axes, TASKS):
     for m in METHOD_ORDER:
         ax.plot(BUDGETS, d[m],
                 marker=MARKERS[m], markersize=7,
-                linewidth=2.0, color=COLORS[m],
+                linewidth=2.6, color=COLORS[m],
                 label=DISPLAY_NAMES[m], zorder=3)
     # Full as horizontal dashed reference
     ax.axhline(d["Full"], color=FULL_COLOR, linestyle="--",
-               linewidth=1.6, label=f"Full ({d['FullTokens']/1000:.1f}k tokens)", zorder=2)
+               linewidth=2.0, label=f"Full ({d['FullTokens']/1000:.1f}k tokens)", zorder=2)
 
     ax.set_title(f"{task}", color=TEXT_DARK, pad=8, fontweight='bold')
     ax.set_xlabel("KV Cache Budget", fontsize=16)
