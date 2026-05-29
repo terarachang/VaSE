@@ -7,11 +7,12 @@ Example:
     --model_path Qwen/Qwen3-4B \
     --methods dense,attn_rkv \
     --batch_size 16 --input_len 128 --output_len 4096 \
-    --token_budget 1024
+    --token_budget 1024 \
     --num_runs 3
 """
 import argparse
 import gc
+import json
 import os
 import sys
 
@@ -24,6 +25,16 @@ if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 from modified.transformers.cache_utils import EvictCache
+
+
+
+METHOD_RENAME = {
+    "dense": "Full",
+    "attn_rkv": "RKV",
+    "cur_fixed_gauss": "CUR Fixed",
+    "cur_resample_gauss": "CUR Resample",
+    "range_sink_sample_attn": "Sample Attn + V",
+}
 
 
 def cleanup_memory() -> None:
@@ -112,8 +123,7 @@ def benchmark_method(args, model, stock_forward, evict_forward, method):
         run_one(model, input_ids, attention_mask, args.output_len, make_cache)
         cleanup_memory()
 
-    for i in range(torch.cuda.device_count()):
-        torch.cuda.reset_peak_memory_stats(device=i)
+    torch.cuda.reset_peak_memory_stats(device=device)
 
     throughputs = []
     for r in range(args.num_runs):
@@ -125,8 +135,7 @@ def benchmark_method(args, model, stock_forward, evict_forward, method):
               f"{tput:.2f} tok/s (batched)", flush=True)
         cleanup_memory()
 
-    peak_mem = sum(torch.cuda.max_memory_allocated(device=i)
-                   for i in range(torch.cuda.device_count()))
+    peak_mem = torch.cuda.max_memory_allocated(device=device)
     return {
         "method": method,
         "throughput_avg": average_excluding_min_max(throughputs),
@@ -150,7 +159,7 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(
         args.model_path,
         torch_dtype=torch.bfloat16,
-        device_map="auto",
+        device_map="cuda:0",
         low_cpu_mem_usage=True,
         attn_implementation=args.attn_implementation,
     )
@@ -183,8 +192,35 @@ def main():
     print(f"{'method':>32} | {'throughput (tok/s)':>18} | {'peak mem (GB)':>14}")
     print("-" * 92)
     for r in results:
-        print(f"{r['method']:>32} | {r['throughput_avg']:>18.1f} | {r['peak_mem_gb']:>14.2f}")
+        print(f"{METHOD_RENAME[r['method']]:>32} | {r['throughput_avg']:>18.1f} | {r['peak_mem_gb']:>14.2f}")
     print("=" * 92)
+
+    write_results_table(args, results)
+
+
+def write_results_table(args, results):
+    """Append/update tables/throughput_<model>_<output_len>.json, keyed by token_budget."""
+    model_name = os.path.basename(args.model_path)
+    out_path = os.path.join(REPO_ROOT, "tables", f"throughput_{model_name}_{args.output_len}.json")
+
+    table = {}
+    if os.path.exists(out_path):
+        with open(out_path) as f:
+            table = json.load(f)
+
+    table[str(args.token_budget)] = [
+        {
+            "Method": METHOD_RENAME.get(r["method"], r["method"]),
+            "Throughput": round(r["throughput_avg"], 1),
+            "Memory": round(r["peak_mem_gb"], 1),
+        }
+        for r in results
+    ]
+
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "w") as f:
+        json.dump(table, f, indent=2)
+    print(f"Wrote results to {out_path}")
 
 
 def parse_args():
