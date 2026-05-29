@@ -75,7 +75,7 @@ def run_one(model, input_ids, attention_mask, output_len, make_cache):
         cache = outputs.past_key_values
         next_token = outputs.logits[:, -1, :].argmax(dim=-1, keepdim=True)
 
-        for _ in range(output_len - 1):
+        for _ in range(output_len):
             start.record()
             outputs = model(input_ids=next_token, past_key_values=cache, use_cache=True)
             end.record()
@@ -84,7 +84,7 @@ def run_one(model, input_ids, attention_mask, output_len, make_cache):
             cache = outputs.past_key_values
             next_token = outputs.logits[:, -1, :].argmax(dim=-1, keepdim=True)
 
-    return decode_ms / 1000.0, output_len - 1
+    return decode_ms / 1000.0, output_len
 
 
 def benchmark_method(args, model, stock_forward, evict_forward, method):
@@ -183,7 +183,7 @@ def main():
     print(f"{'method':>32} | {'throughput (tok/s)':>18} | {'peak mem (GB)':>14}")
     print("-" * 92)
     for r in results:
-        print(f"{r['method']:>32} | {r['throughput_avg']:>18.2f} | {r['peak_mem_gb']:>14.2f}")
+        print(f"{r['method']:>32} | {r['throughput_avg']:>18.1f} | {r['peak_mem_gb']:>14.2f}")
     print("=" * 92)
 
 
