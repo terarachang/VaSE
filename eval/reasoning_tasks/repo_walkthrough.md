@@ -23,11 +23,11 @@ AIME24/25/26, MATH-500, GPQA-Diamond, HMMT, LiveCodeBench. Data lives in `data/<
 
 | Mode | Importance signal |
 |---|---|
-| `absmax` / `var` / `l2` | Value magnitude / variance / L2 norm |
-| `attn` | Top-k by attention score |
-| `attn_sample` | Sample proportional to attention scores |
-| `attn_rkv` | Attention blended with cosine-similarity redundancy (`--rkv_lambda`) |
-| `range_sink_sample_attn` | Value range (max−min) + sink tokens + sampled attention (use with `--smooth`) |
+| `attn` | SnapKV: Select top-k kv pairs by attention score |
+| `attn_sample` | Sample kv pairs proportional to attention scores |
+| `attn_rkv` | R-KV: Attention augmented with cosine-similarity redundancy (`--rkv_lambda`) |
+| `range_sink_sample_attn` | Value range (max−min) + sink tokens + sampled attention |
+| `range` / `var` / `l2` | Value magnitude variants: range / variance / L2 norm |
 | `cur_fixed_gauss` / `cur_resample_gauss` | CUR decomposition with fixed/resampled Gaussian projection |
 
 Key params: `token_budget` (K, total cache size), `residual_length` (B, recent-token buffer), `n_large` (preallocated high-importance slots), `--smooth`, `--temperature`.
