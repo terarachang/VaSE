@@ -1,0 +1,53 @@
+{
+  "2048": [
+    {
+      "Method": "RKV",
+      "Throughput": 344.1,
+      "Memory": 34.3
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Throughput": 368.4,
+      "Memory": 34.3
+    },
+    {
+      "Method": "CUR Resample",
+      "Throughput": 396.8,
+      "Memory": 33.9
+    }
+  ],
+  "4096": [
+    {
+      "Method": "RKV",
+      "Throughput": 267.0,
+      "Memory": 42.4
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Throughput": 328.4,
+      "Memory": 39.6
+    },
+    {
+      "Method": "CUR Resample",
+      "Throughput": 364.5,
+      "Memory": 38.9
+    }
+  ],
+  "6144": [
+    {
+      "Method": "RKV",
+      "Throughput": 209.5,
+      "Memory": 52.6
+    },
+    {
+      "Method": "Sample Attn + V",
+      "Throughput": 302.1,
+      "Memory": 45.4
+    },
+    {
+      "Method": "CUR Resample",
+      "Throughput": 341.5,
+      "Memory": 43.9
+    }
+  ]
+}
