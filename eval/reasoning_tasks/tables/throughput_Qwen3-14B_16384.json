@@ -1,6 +1,11 @@
 {
   "4096": [
     {
+      "Method": "Full",
+      "Throughput": 132.9,
+      "Memory": 68.7
+    },
+    {
       "Method": "RKV",
       "Throughput": 277.8,
       "Memory": 42.4
@@ -17,6 +22,11 @@
     }
   ],
   "6144": [
+    {
+      "Method": "Full",
+      "Throughput": 132.9,
+      "Memory": 68.7
+    },
     {
       "Method": "RKV",
       "Throughput": 233.2,
