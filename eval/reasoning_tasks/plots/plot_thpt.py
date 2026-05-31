@@ -111,7 +111,7 @@ DISPLAY_NAMES = {
     "Sample Attn + V": "VaSE-AttnV",
     "Full":            "Full",
 }
-METHOD_ORDER = ["RKV", "CUR Resample", "Sample Attn + V"]
+METHOD_ORDER = ["RKV", "Sample Attn + V", "CUR Resample"]
 
 FULL_COLOR = "#242424"
 FULL_BAR_COLOR = "#F0D27A"  # yellow (matches plot_lcb_quant.py SELECT_COLOR)
@@ -201,7 +201,7 @@ ax.set_ylabel("Memory (GB)", color="black", labelpad=6, fontsize=16)
 ax.set_xticks(xpos)
 ax.set_xticklabels([DISPLAY_NAMES[m] for m in bar_order], fontweight='bold')
 ax.set_xlim(xpos[0] - 0.6, xpos[-1] + 0.6)
-ax.set_ylim(0, max(MEMORY.values()) * 1.15)
+ax.set_ylim(20, max(MEMORY.values()) * 1.15)
 ax.legend(handles=[mpatches.Patch(facecolor="#D9D9D9", edgecolor="#B0B0B0",
                                   hatch="///", linewidth=0, label="14B Model Weights")],
           loc="upper left", frameon=True, fontsize=13,
