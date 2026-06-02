@@ -85,13 +85,18 @@ def infer(args):
 
     for run_i in range(args.total_run):
         merge_shard_files(os.path.join(args.output_dir, f"run_{run_i}"))
-    # batch_times is identical across run_0 ... run_{bs-1}
+    # HF writes per-batch `batch_times` (sec), identical across run_0 ... run_{bs-1};
+    # vllm writes a single `total_time` (min) per independent run. Normalize to seconds.
     bs = choose_task_config(model_size=None)[args.data_name]["bs"]
-    batch_times = []
-    for run_i in range(0, args.total_run, bs):
+    total_time = 0.0
+    for run_i in range(args.total_run):
         with open(os.path.join(args.output_dir, f"run_{run_i}", "other_info.json"), 'r') as f:
-            batch_times.extend(json.load(f)['batch_times'])
-    total_time = sum(batch_times)
+            info = json.load(f)
+        if 'batch_times' in info:
+            if run_i % bs == 0:  # batch_times shared within a bs-group; count once
+                total_time += sum(info['batch_times'])
+        else:
+            total_time += info['total_time'] * 60  # min -> sec
 
     generate_lens_list = []
     no_ans_list = []
