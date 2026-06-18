@@ -1,4 +1,4 @@
-# VaSE: Value-aware Stochastic KV Cache Eviction
+# [VaSE: Value-aware Stochastic KV Cache Eviction](https://arxiv.org/abs/2606.03928)
 
 ## Installation
 
